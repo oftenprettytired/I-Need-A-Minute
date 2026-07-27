@@ -16,6 +16,9 @@
   --cat-future: #9575b3;
   --cat-doesnt-exist: #c98a4b;
   --cat-unspecified: #9aa39f;
+  --cat-yes: #5a9c6f;
+  --cat-no: #b3543f;
+  --cat-somewhat: #c9a227;
 }
 
 * {
@@ -359,6 +362,14 @@ button {
   font-size: 0.9rem;
 }
 
+.tracker-subheading {
+  margin: 20px 0 2px;
+  padding-top: 16px;
+  border-top: 1px solid var(--sand);
+  color: var(--teal-dark);
+  font-size: 1rem;
+}
+
 .tracker-bar {
   display: flex;
   width: 100%;
@@ -412,6 +423,18 @@ button {
 
 .cat-unspecified {
   background: var(--cat-unspecified);
+}
+
+.cat-yes {
+  background: var(--cat-yes);
+}
+
+.cat-no {
+  background: var(--cat-no);
+}
+
+.cat-somewhat {
+  background: var(--cat-somewhat);
 }
 
 .archive-category-heading {
@@ -499,6 +522,9 @@ button {
     --cat-future: #b79bd6;
     --cat-doesnt-exist: #e0a868;
     --cat-unspecified: #7c8985;
+    --cat-yes: #7cbf8e;
+    --cat-no: #e08a72;
+    --cat-somewhat: #d9bb5c;
   }
 
   .primary {

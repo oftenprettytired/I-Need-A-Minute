@@ -31,6 +31,19 @@ function categoryKey(session) {
   return session.timeframe && CATEGORIES.some((c) => c.key === session.timeframe) ? session.timeframe : "unspecified";
 }
 
+const RESOLUTION_CATEGORIES = [
+  { key: "yes", label: "Yes" },
+  { key: "no", label: "No" },
+  { key: "somewhat", label: "Somewhat" },
+  { key: "unspecified", label: "Not Specified" },
+];
+
+function resolutionCategoryKey(session) {
+  return session.resolution && RESOLUTION_CATEGORIES.some((c) => c.key === session.resolution)
+    ? session.resolution
+    : "unspecified";
+}
+
 function deserializeArchive(json) {
   if (!json) return [];
   try {
@@ -92,12 +105,42 @@ const emptyStateEl = document.getElementById("emptyState");
 const trackerSectionEl = document.getElementById("trackerSection");
 const trackerBarEl = document.getElementById("trackerBar");
 const trackerLegendEl = document.getElementById("trackerLegend");
+const resolutionTrackerBarEl = document.getElementById("resolutionTrackerBar");
+const resolutionTrackerLegendEl = document.getElementById("resolutionTrackerLegend");
 
 function buildCategoryHeading(label, count) {
   const h = document.createElement("h2");
   h.className = "archive-category-heading";
   h.textContent = `${label} (${count})`;
   return h;
+}
+
+function renderTrackerBar(archive, categories, keyFn, barEl, legendEl) {
+  const counts = Object.fromEntries(categories.map((c) => [c.key, 0]));
+  for (const entry of archive) counts[keyFn(entry.session)] += 1;
+
+  barEl.innerHTML = "";
+  legendEl.innerHTML = "";
+
+  for (const category of categories) {
+    const count = counts[category.key];
+    if (count === 0) continue;
+    const pct = Math.round((count / archive.length) * 100);
+
+    const segment = document.createElement("div");
+    segment.className = `tracker-segment cat-${category.key}`;
+    segment.style.width = `${(count / archive.length) * 100}%`;
+    segment.title = `${category.label}: ${count} (${pct}%)`;
+    barEl.appendChild(segment);
+
+    const legendItem = document.createElement("div");
+    legendItem.className = "tracker-legend-item";
+    const dot = document.createElement("span");
+    dot.className = `tracker-dot cat-${category.key}`;
+    legendItem.appendChild(dot);
+    legendItem.append(`${category.label} — ${count} (${pct}%)`);
+    legendEl.appendChild(legendItem);
+  }
 }
 
 function renderTracker(archive) {
@@ -107,31 +150,8 @@ function renderTracker(archive) {
   }
   trackerSectionEl.hidden = false;
 
-  const counts = Object.fromEntries(CATEGORIES.map((c) => [c.key, 0]));
-  for (const entry of archive) counts[categoryKey(entry.session)] += 1;
-
-  trackerBarEl.innerHTML = "";
-  trackerLegendEl.innerHTML = "";
-
-  for (const category of CATEGORIES) {
-    const count = counts[category.key];
-    if (count === 0) continue;
-    const pct = Math.round((count / archive.length) * 100);
-
-    const segment = document.createElement("div");
-    segment.className = `tracker-segment cat-${category.key}`;
-    segment.style.width = `${(count / archive.length) * 100}%`;
-    segment.title = `${category.label}: ${count} (${pct}%)`;
-    trackerBarEl.appendChild(segment);
-
-    const legendItem = document.createElement("div");
-    legendItem.className = "tracker-legend-item";
-    const dot = document.createElement("span");
-    dot.className = `tracker-dot cat-${category.key}`;
-    legendItem.appendChild(dot);
-    legendItem.append(`${category.label} — ${count} (${pct}%)`);
-    trackerLegendEl.appendChild(legendItem);
-  }
+  renderTrackerBar(archive, CATEGORIES, categoryKey, trackerBarEl, trackerLegendEl);
+  renderTrackerBar(archive, RESOLUTION_CATEGORIES, resolutionCategoryKey, resolutionTrackerBarEl, resolutionTrackerLegendEl);
 }
 
 function buildCard(entry) {
