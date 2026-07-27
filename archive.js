@@ -70,6 +70,18 @@ function saveArchive(archive) {
   localStorage.setItem(ARCHIVE_KEY, serializeArchive(archive));
 }
 
+function downloadBlob(content, filename, mimeType) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -222,6 +234,17 @@ function render() {
     for (const entry of entries) archiveListEl.appendChild(buildCard(entry));
   }
 }
+
+const downloadAllBtn = document.getElementById("downloadAllBtn");
+downloadAllBtn.addEventListener("click", () => {
+  const archive = loadArchive();
+  if (archive.length === 0) {
+    alert("No saved check-ins to back up yet.");
+    return;
+  }
+  const dateStamp = new Date().toISOString().slice(0, 10);
+  downloadBlob(JSON.stringify(archive, null, 2), `i-need-a-minute-backup-${dateStamp}.json`, "application/json");
+});
 
 render();
 
