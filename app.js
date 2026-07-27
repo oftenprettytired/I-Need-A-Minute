@@ -1,7 +1,22 @@
 const SESSION_KEY = "inam-session-v1";
 const ARCHIVE_KEY = "inam-archive-v1";
 
-const STAGES = ["intake", "summary", "timer", "revisit", "resolved"];
+const STAGES = [
+  "feeling",
+  "cause",
+  "reaction",
+  "timeframe",
+  "plan",
+  "timerSetup",
+  "timer",
+  "revisitFeeling",
+  "revisitResolution",
+  "revisitNotes",
+  "resolved",
+];
+
+const INTAKE_STAGES = ["feeling", "cause", "reaction", "timeframe", "plan"];
+const REVISIT_STAGES = ["revisitFeeling", "revisitResolution", "revisitNotes"];
 
 const TIMEFRAME_LABELS = {
   past: "the past",
@@ -10,15 +25,15 @@ const TIMEFRAME_LABELS = {
   "doesnt-exist": "something that doesn't really exist",
 };
 
-const RESOLUTION_LABELS = {
-  yes: "Yes",
-  no: "No",
-  somewhat: "Somewhat",
+const RESOLUTION_SENTENCES = {
+  yes: "Yes, it was resolved.",
+  no: "No, it wasn't resolved.",
+  somewhat: "It was somewhat resolved.",
 };
 
 function createEmptySession() {
   return {
-    stage: "intake",
+    stage: "feeling",
     feeling: "",
     cause: "",
     reaction: "",
@@ -105,22 +120,23 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function buildIntakeSummary(session) {
-  const parts = [];
-  parts.push(`You're feeling <strong>${escapeHtml(session.feeling) || "…"}</strong>.`);
-  if (session.cause) parts.push(`Caused by: <em>${escapeHtml(session.cause)}</em>.`);
-  if (session.reaction) parts.push(`Your first instinct: <em>${escapeHtml(session.reaction)}</em>.`);
-  if (session.timeframe) parts.push(`This is happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
-  if (session.plan) parts.push(`Your plan to calm down: <em>${escapeHtml(session.plan)}</em>.`);
-  return `<p>${parts.join(" ")}</p>`;
-}
+function buildFirstPersonSummary(session) {
+  const beforeParts = [];
+  beforeParts.push(
+    `I was feeling <strong>${escapeHtml(session.feeling) || "…"}</strong>${
+      session.cause ? `, caused by <em>${escapeHtml(session.cause)}</em>` : ""
+    }.`
+  );
+  if (session.reaction) beforeParts.push(`My first instinct was to <em>${escapeHtml(session.reaction)}</em>.`);
+  if (session.timeframe) beforeParts.push(`This was happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
+  if (session.plan) beforeParts.push(`My plan to calm down was to <em>${escapeHtml(session.plan)}</em>.`);
 
-function buildResolvedSummary(session) {
-  const resParts = [];
-  resParts.push(`Now you're feeling <strong>${escapeHtml(session.revisitFeeling) || "…"}</strong>.`);
-  if (session.resolution) resParts.push(`Resolution: <strong>${RESOLUTION_LABELS[session.resolution]}</strong>.`);
-  if (session.notes) resParts.push(`Notes: <em>${escapeHtml(session.notes)}</em>.`);
-  return `${buildIntakeSummary(session)}<hr/><p>${resParts.join(" ")}</p>`;
+  const afterParts = [];
+  afterParts.push(`After taking a minute, I felt <strong>${escapeHtml(session.revisitFeeling) || "…"}</strong>.`);
+  if (session.resolution) afterParts.push(RESOLUTION_SENTENCES[session.resolution] || "");
+  if (session.notes) afterParts.push(`Notes: <em>${escapeHtml(session.notes)}</em>.`);
+
+  return `<p>${beforeParts.join(" ")}</p><p>${afterParts.join(" ")}</p>`;
 }
 
 function formatCountdown(ms) {
@@ -135,15 +151,18 @@ let session = loadSession();
 const DEFAULT_TITLE = document.title;
 
 const stageEls = Object.fromEntries(STAGES.map((s) => [s, document.getElementById(s)]));
+const stepIndicator = document.getElementById("stepIndicator");
 
-const intakeForm = document.getElementById("intakeForm");
-const feelingInput = document.getElementById("feeling");
-const causeInput = document.getElementById("cause");
-const reactionInput = document.getElementById("reaction");
-const planInput = document.getElementById("plan");
+const feelingForm = document.getElementById("feelingForm");
+const feelingInput = document.getElementById("feelingInput");
+const causeForm = document.getElementById("causeForm");
+const causeInput = document.getElementById("causeInput");
+const reactionForm = document.getElementById("reactionForm");
+const reactionInput = document.getElementById("reactionInput");
+const timeframeForm = document.getElementById("timeframeForm");
+const planForm = document.getElementById("planForm");
+const planInput = document.getElementById("planInput");
 
-const summaryText = document.getElementById("summaryText");
-const editIntakeBtn = document.getElementById("editIntakeBtn");
 const minutesInput = document.getElementById("minutesInput");
 const quickPicks = document.getElementById("quickPicks");
 const goBtn = document.getElementById("goBtn");
@@ -152,10 +171,12 @@ const countdownDisplay = document.getElementById("countdownDisplay");
 const skipTimerBtn = document.getElementById("skipTimerBtn");
 const chime = document.getElementById("chime");
 
-const revisitForm = document.getElementById("revisitForm");
-const revisitFeelingInput = document.getElementById("revisitFeeling");
+const revisitFeelingForm = document.getElementById("revisitFeelingForm");
+const revisitFeelingInput = document.getElementById("revisitFeelingInput");
 const resolutionChoices = document.getElementById("resolutionChoices");
-const revisitNotesInput = document.getElementById("revisitNotes");
+const resolutionNextBtn = document.getElementById("resolutionNextBtn");
+const revisitNotesForm = document.getElementById("revisitNotesForm");
+const revisitNotesInput = document.getElementById("revisitNotesInput");
 
 const resolvedSummary = document.getElementById("resolvedSummary");
 const saveArchiveBtn = document.getElementById("saveArchiveBtn");
@@ -164,48 +185,87 @@ const resetBtn = document.getElementById("resetBtn");
 let selectedResolution = "";
 let timerIntervalId = null;
 
-function renderStage() {
-  for (const s of STAGES) stageEls[s].hidden = s !== session.stage;
-
-  if (session.stage === "intake") fillIntakeForm();
-  if (session.stage === "summary") fillSummaryStage();
-  if (session.stage === "timer") startTimerLoop();
-  if (session.stage === "revisit") fillRevisitForm();
-  if (session.stage === "resolved") resolvedSummary.innerHTML = buildResolvedSummary(session);
+function goToStage(stage) {
+  session.stage = stage;
+  saveSession(session);
+  renderStage();
 }
 
-function fillIntakeForm() {
-  feelingInput.value = session.feeling;
-  causeInput.value = session.cause;
-  reactionInput.value = session.reaction;
-  planInput.value = session.plan;
-  for (const radio of intakeForm.querySelectorAll('input[name="timeframe"]')) {
+function updateStepIndicator() {
+  const intakeIdx = INTAKE_STAGES.indexOf(session.stage);
+  const revisitIdx = REVISIT_STAGES.indexOf(session.stage);
+  if (intakeIdx !== -1) {
+    stepIndicator.textContent = `Step ${intakeIdx + 1} of ${INTAKE_STAGES.length}`;
+    stepIndicator.hidden = false;
+  } else if (revisitIdx !== -1) {
+    stepIndicator.textContent = `Step ${revisitIdx + 1} of ${REVISIT_STAGES.length}`;
+    stepIndicator.hidden = false;
+  } else {
+    stepIndicator.hidden = true;
+  }
+}
+
+function renderStage() {
+  for (const s of STAGES) stageEls[s].hidden = s !== session.stage;
+  updateStepIndicator();
+
+  if (session.stage === "feeling") feelingInput.value = session.feeling;
+  if (session.stage === "cause") causeInput.value = session.cause;
+  if (session.stage === "reaction") reactionInput.value = session.reaction;
+  if (session.stage === "timeframe") fillTimeframe();
+  if (session.stage === "plan") planInput.value = session.plan;
+  if (session.stage === "timerSetup") minutesInput.value = session.minutes || 5;
+  if (session.stage === "timer") startTimerLoop();
+  if (session.stage === "revisitFeeling") revisitFeelingInput.value = session.revisitFeeling;
+  if (session.stage === "revisitResolution") fillResolutionButtons();
+  if (session.stage === "revisitNotes") revisitNotesInput.value = session.notes;
+  if (session.stage === "resolved") resolvedSummary.innerHTML = buildFirstPersonSummary(session);
+}
+
+function fillTimeframe() {
+  for (const radio of timeframeForm.querySelectorAll('input[name="timeframe"]')) {
     radio.checked = radio.value === session.timeframe;
   }
 }
 
-function fillSummaryStage() {
-  summaryText.innerHTML = buildIntakeSummary(session);
-  minutesInput.value = session.minutes || 5;
-}
-
-intakeForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  session.feeling = feelingInput.value.trim();
-  session.cause = causeInput.value.trim();
-  session.reaction = reactionInput.value.trim();
-  session.plan = planInput.value.trim();
-  const checked = intakeForm.querySelector('input[name="timeframe"]:checked');
-  session.timeframe = checked ? checked.value : "";
-  session.stage = "summary";
-  saveSession(session);
-  renderStage();
+// Every "Back" link just steps to the previous entry in STAGES relative to
+// whichever stage is currently showing.
+document.querySelectorAll("[data-back]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const idx = STAGES.indexOf(session.stage);
+    goToStage(STAGES[idx - 1]);
+  });
 });
 
-editIntakeBtn.addEventListener("click", () => {
-  session.stage = "intake";
-  saveSession(session);
-  renderStage();
+feelingForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  session.feeling = feelingInput.value.trim();
+  goToStage("cause");
+});
+
+causeForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  session.cause = causeInput.value.trim();
+  goToStage("reaction");
+});
+
+reactionForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  session.reaction = reactionInput.value.trim();
+  goToStage("timeframe");
+});
+
+timeframeForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  const checked = timeframeForm.querySelector('input[name="timeframe"]:checked');
+  session.timeframe = checked ? checked.value : "";
+  goToStage("plan");
+});
+
+planForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  session.plan = planInput.value.trim();
+  goToStage("timerSetup");
 });
 
 quickPicks.querySelectorAll("button").forEach((btn) => {
@@ -218,9 +278,7 @@ goBtn.addEventListener("click", () => {
   const minutes = Math.min(180, Math.max(1, parseInt(minutesInput.value, 10) || 5));
   session.minutes = minutes;
   session.endTime = Date.now() + minutes * 60000;
-  session.stage = "timer";
-  saveSession(session);
-  renderStage();
+  goToStage("timer");
 
   if (typeof Notification !== "undefined" && Notification.permission === "default") {
     Notification.requestPermission();
@@ -248,9 +306,7 @@ function onTimerComplete() {
   playChime();
   if (document.hidden) notifyTimeUp();
   document.title = "⏰ Time's up! — I Need A Minute";
-  session.stage = "revisit";
-  saveSession(session);
-  renderStage();
+  goToStage("revisitFeeling");
 }
 
 function playChime() {
@@ -277,14 +333,16 @@ window.addEventListener("focus", () => {
 
 skipTimerBtn.addEventListener("click", () => {
   clearInterval(timerIntervalId);
-  session.stage = "revisit";
-  saveSession(session);
-  renderStage();
+  goToStage("revisitFeeling");
 });
 
-function fillRevisitForm() {
-  revisitFeelingInput.value = session.revisitFeeling;
-  revisitNotesInput.value = session.notes;
+revisitFeelingForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  session.revisitFeeling = revisitFeelingInput.value.trim();
+  goToStage("revisitResolution");
+});
+
+function fillResolutionButtons() {
   selectedResolution = session.resolution || "";
   updateResolutionButtons();
 }
@@ -302,14 +360,15 @@ resolutionChoices.querySelectorAll(".choice-btn").forEach((btn) => {
   });
 });
 
-revisitForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  session.revisitFeeling = revisitFeelingInput.value.trim();
+resolutionNextBtn.addEventListener("click", () => {
   session.resolution = selectedResolution;
+  goToStage("revisitNotes");
+});
+
+revisitNotesForm.addEventListener("submit", (e) => {
+  e.preventDefault();
   session.notes = revisitNotesInput.value.trim();
-  session.stage = "resolved";
-  saveSession(session);
-  renderStage();
+  goToStage("resolved");
 });
 
 saveArchiveBtn.addEventListener("click", () => {
@@ -350,7 +409,7 @@ resetBtn.addEventListener("click", () => {
 // has since passed, skip straight to the revisit stage on reload instead of
 // showing a stale/expired countdown.
 if (session.stage === "timer" && session.endTime && Date.now() >= session.endTime) {
-  session.stage = "revisit";
+  session.stage = "revisitFeeling";
   saveSession(session);
 }
 

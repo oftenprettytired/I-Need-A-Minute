@@ -13,6 +13,24 @@ const RESOLUTION_LABELS = {
   somewhat: "Somewhat",
 };
 
+const RESOLUTION_SENTENCES = {
+  yes: "Yes, it was resolved.",
+  no: "No, it wasn't resolved.",
+  somewhat: "It was somewhat resolved.",
+};
+
+const CATEGORIES = [
+  { key: "past", label: "Past" },
+  { key: "present", label: "Right Now" },
+  { key: "future", label: "Future" },
+  { key: "doesnt-exist", label: "Doesn't Really Exist" },
+  { key: "unspecified", label: "Not Specified" },
+];
+
+function categoryKey(session) {
+  return session.timeframe && CATEGORIES.some((c) => c.key === session.timeframe) ? session.timeframe : "unspecified";
+}
+
 function deserializeArchive(json) {
   if (!json) return [];
   try {
@@ -50,26 +68,71 @@ function formatSavedAt(iso) {
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleString();
 }
 
-function buildIntakeSummary(session) {
-  const parts = [];
-  parts.push(`You were feeling <strong>${escapeHtml(session.feeling) || "…"}</strong>.`);
-  if (session.cause) parts.push(`Caused by: <em>${escapeHtml(session.cause)}</em>.`);
-  if (session.reaction) parts.push(`Your first instinct: <em>${escapeHtml(session.reaction)}</em>.`);
-  if (session.timeframe) parts.push(`This was happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
-  if (session.plan) parts.push(`Your plan to calm down: <em>${escapeHtml(session.plan)}</em>.`);
-  return `<p>${parts.join(" ")}</p>`;
-}
+function buildFirstPersonSummary(session) {
+  const beforeParts = [];
+  beforeParts.push(
+    `I was feeling <strong>${escapeHtml(session.feeling) || "…"}</strong>${
+      session.cause ? `, caused by <em>${escapeHtml(session.cause)}</em>` : ""
+    }.`
+  );
+  if (session.reaction) beforeParts.push(`My first instinct was to <em>${escapeHtml(session.reaction)}</em>.`);
+  if (session.timeframe) beforeParts.push(`This was happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
+  if (session.plan) beforeParts.push(`My plan to calm down was to <em>${escapeHtml(session.plan)}</em>.`);
 
-function buildResolvedSummary(session) {
-  const resParts = [];
-  resParts.push(`Afterward you felt <strong>${escapeHtml(session.revisitFeeling) || "…"}</strong>.`);
-  if (session.resolution) resParts.push(`Resolution: <strong>${RESOLUTION_LABELS[session.resolution] || session.resolution}</strong>.`);
-  if (session.notes) resParts.push(`Notes: <em>${escapeHtml(session.notes)}</em>.`);
-  return `${buildIntakeSummary(session)}<hr/><p>${resParts.join(" ")}</p>`;
+  const afterParts = [];
+  afterParts.push(`After taking a minute, I felt <strong>${escapeHtml(session.revisitFeeling) || "…"}</strong>.`);
+  if (session.resolution) afterParts.push(RESOLUTION_SENTENCES[session.resolution] || "");
+  if (session.notes) afterParts.push(`Notes: <em>${escapeHtml(session.notes)}</em>.`);
+
+  return `<p>${beforeParts.join(" ")}</p><p>${afterParts.join(" ")}</p>`;
 }
 
 const archiveListEl = document.getElementById("archiveList");
 const emptyStateEl = document.getElementById("emptyState");
+const trackerSectionEl = document.getElementById("trackerSection");
+const trackerBarEl = document.getElementById("trackerBar");
+const trackerLegendEl = document.getElementById("trackerLegend");
+
+function buildCategoryHeading(label, count) {
+  const h = document.createElement("h2");
+  h.className = "archive-category-heading";
+  h.textContent = `${label} (${count})`;
+  return h;
+}
+
+function renderTracker(archive) {
+  if (archive.length === 0) {
+    trackerSectionEl.hidden = true;
+    return;
+  }
+  trackerSectionEl.hidden = false;
+
+  const counts = Object.fromEntries(CATEGORIES.map((c) => [c.key, 0]));
+  for (const entry of archive) counts[categoryKey(entry.session)] += 1;
+
+  trackerBarEl.innerHTML = "";
+  trackerLegendEl.innerHTML = "";
+
+  for (const category of CATEGORIES) {
+    const count = counts[category.key];
+    if (count === 0) continue;
+    const pct = Math.round((count / archive.length) * 100);
+
+    const segment = document.createElement("div");
+    segment.className = `tracker-segment cat-${category.key}`;
+    segment.style.width = `${(count / archive.length) * 100}%`;
+    segment.title = `${category.label}: ${count} (${pct}%)`;
+    trackerBarEl.appendChild(segment);
+
+    const legendItem = document.createElement("div");
+    legendItem.className = "tracker-legend-item";
+    const dot = document.createElement("span");
+    dot.className = `tracker-dot cat-${category.key}`;
+    legendItem.appendChild(dot);
+    legendItem.append(`${category.label} — ${count} (${pct}%)`);
+    trackerLegendEl.appendChild(legendItem);
+  }
+}
 
 function buildCard(entry) {
   const { session } = entry;
@@ -96,7 +159,7 @@ function buildCard(entry) {
   const detail = document.createElement("div");
   detail.className = "archive-card-detail";
   detail.hidden = true;
-  detail.innerHTML = buildResolvedSummary(session);
+  detail.innerHTML = buildFirstPersonSummary(session);
 
   const viewBtn = document.createElement("button");
   viewBtn.type = "button";
@@ -127,10 +190,16 @@ function render() {
     .slice()
     .sort((a, b) => new Date(b.savedAt) - new Date(a.savedAt));
 
+  renderTracker(archive);
+
   archiveListEl.innerHTML = "";
   emptyStateEl.hidden = archive.length > 0;
-  for (const entry of archive) {
-    archiveListEl.appendChild(buildCard(entry));
+
+  for (const category of CATEGORIES) {
+    const entries = archive.filter((entry) => categoryKey(entry.session) === category.key);
+    if (entries.length === 0) continue;
+    archiveListEl.appendChild(buildCategoryHeading(category.label, entries.length));
+    for (const entry of entries) archiveListEl.appendChild(buildCard(entry));
   }
 }
 

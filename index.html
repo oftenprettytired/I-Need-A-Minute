@@ -22,24 +22,43 @@
     <a href="archive.html" class="button-link small">Archive</a>
   </header>
 
-  <!-- Stage 1: Intake -->
-  <section id="intake" class="stage" hidden>
-    <form id="intakeForm">
+  <div id="stepIndicator" class="step-indicator" hidden></div>
+
+  <!-- Intake, one question per screen -->
+  <section id="feeling" class="stage" hidden>
+    <form id="feelingForm" class="single-question">
       <label class="field">
         What are you feeling?
-        <input type="text" id="feeling" placeholder="e.g. Anxious, angry, overwhelmed…" required />
+        <input type="text" id="feelingInput" placeholder="e.g. Anxious, angry, overwhelmed…" required />
       </label>
+      <button type="submit" class="primary large">Next</button>
+    </form>
+  </section>
 
+  <section id="cause" class="stage" hidden>
+    <form id="causeForm" class="single-question">
       <label class="field">
         What's causing it?
-        <input type="text" id="cause" placeholder="What's behind this feeling?" />
+        <input type="text" id="causeInput" placeholder="What's behind this feeling?" />
       </label>
+      <button type="button" class="link-btn" data-back>Back</button>
+      <button type="submit" class="primary large">Next</button>
+    </form>
+  </section>
 
+  <section id="reaction" class="stage" hidden>
+    <form id="reactionForm" class="single-question">
       <label class="field">
         What does this make you want to do? (your first reaction)
-        <input type="text" id="reaction" placeholder="e.g. Snap back, walk away, shut down…" />
+        <input type="text" id="reactionInput" placeholder="e.g. Snap back, walk away, shut down…" />
       </label>
+      <button type="button" class="link-btn" data-back>Back</button>
+      <button type="submit" class="primary large">Next</button>
+    </form>
+  </section>
 
+  <section id="timeframe" class="stage" hidden>
+    <form id="timeframeForm" class="single-question">
       <fieldset class="field timeframe-field">
         <legend>Is this problem happening in the...</legend>
         <div class="choice-grid" id="timeframeChoices">
@@ -49,28 +68,29 @@
           <label class="choice"><input type="radio" name="timeframe" value="doesnt-exist" /> It doesn't really exist</label>
         </div>
       </fieldset>
-
-      <label class="field">
-        How will you calm yourself and regulate this feeling?
-        <textarea id="plan" rows="3" placeholder="e.g. Breathe slowly, step outside, drink some water…"></textarea>
-      </label>
-
-      <button type="submit" class="primary large">Submit</button>
+      <button type="button" class="link-btn" data-back>Back</button>
+      <button type="submit" class="primary large">Next</button>
     </form>
   </section>
 
-  <!-- Stage 2: Summary + timer setup -->
-  <section id="summary" class="stage" hidden>
-    <h2>Here's what you shared</h2>
-    <div class="summary-card" id="summaryText"></div>
+  <section id="plan" class="stage" hidden>
+    <form id="planForm" class="single-question">
+      <label class="field">
+        How will you calm yourself and regulate this feeling?
+        <textarea id="planInput" rows="3" placeholder="e.g. Breathe slowly, step outside, drink some water…"></textarea>
+      </label>
+      <button type="button" class="link-btn" data-back>Back</button>
+      <button type="submit" class="primary large">Next</button>
+    </form>
+  </section>
 
-    <button type="button" id="editIntakeBtn" class="link-btn">Edit my answers</button>
-
+  <!-- Time needed, directly before the timer (no summary shown yet) -->
+  <section id="timerSetup" class="stage" hidden>
+    <h2>Time needed</h2>
     <div class="timer-setup">
       <label class="field">
-        Time needed
+        Minutes
         <input type="number" id="minutesInput" min="1" max="180" step="1" value="5" />
-        <span class="hint">minutes</span>
       </label>
       <div class="quick-picks" id="quickPicks">
         <button type="button" data-minutes="2">2</button>
@@ -78,11 +98,12 @@
         <button type="button" data-minutes="10">10</button>
         <button type="button" data-minutes="15">15</button>
       </div>
-      <button type="button" id="goBtn" class="primary large">Go</button>
     </div>
+    <button type="button" class="link-btn" data-back>Back</button>
+    <button type="button" id="goBtn" class="primary large">Go</button>
   </section>
 
-  <!-- Stage 3: Timer -->
+  <!-- Timer -->
   <section id="timer" class="stage" hidden>
     <h2>Take your minute</h2>
     <p class="timer-hint">Breathe. Step away if you can. Come back when the timer ends.</p>
@@ -90,15 +111,20 @@
     <button type="button" id="skipTimerBtn" class="link-btn">I'm ready now</button>
   </section>
 
-  <!-- Stage 4: Revisit -->
-  <section id="revisit" class="stage" hidden>
+  <!-- Revisit, one question per screen -->
+  <section id="revisitFeeling" class="stage" hidden>
     <h2>Welcome back</h2>
-    <form id="revisitForm">
+    <form id="revisitFeelingForm" class="single-question">
       <label class="field">
         What are you feeling now?
-        <input type="text" id="revisitFeeling" placeholder="How do you feel now?" required />
+        <input type="text" id="revisitFeelingInput" placeholder="How do you feel now?" required />
       </label>
+      <button type="submit" class="primary large">Next</button>
+    </form>
+  </section>
 
+  <section id="revisitResolution" class="stage" hidden>
+    <div class="single-question">
       <fieldset class="field">
         <legend>Was there a resolution?</legend>
         <div class="choice-grid three" id="resolutionChoices">
@@ -107,17 +133,23 @@
           <button type="button" class="choice-btn" data-value="somewhat">Somewhat</button>
         </div>
       </fieldset>
+      <button type="button" class="link-btn" data-back>Back</button>
+      <button type="button" id="resolutionNextBtn" class="primary large">Next</button>
+    </div>
+  </section>
 
+  <section id="revisitNotes" class="stage" hidden>
+    <form id="revisitNotesForm" class="single-question">
       <label class="field">
         Notes
-        <textarea id="revisitNotes" rows="3" placeholder="Anything else worth remembering…"></textarea>
+        <textarea id="revisitNotesInput" rows="3" placeholder="Anything else worth remembering…"></textarea>
       </label>
-
+      <button type="button" class="link-btn" data-back>Back</button>
       <button type="submit" class="primary large">Submit</button>
     </form>
   </section>
 
-  <!-- Stage 5: Resolution summary -->
+  <!-- Final summary, first person -->
   <section id="resolved" class="stage" hidden>
     <h2>How it went</h2>
     <div class="summary-card" id="resolvedSummary"></div>
