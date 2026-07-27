@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>I Need A Minute — Archive</title>
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#3a7d8a" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Need A Minute" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<main class="page">
+  <header class="intro archive-header">
+    <h1>Archive</h1>
+    <p>Saved check-ins. Expand one to look back on it.</p>
+    <a href="index.html" class="button-link">Home</a>
+  </header>
+
+  <section id="archiveList" class="archive-list"></section>
+  <p id="emptyState" class="empty-state" hidden>
+    No saved check-ins yet. Save one from the app.
+  </p>
+</main>
+
+<script src="archive.js"></script>
+</body>
+</html>

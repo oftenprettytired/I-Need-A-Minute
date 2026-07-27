@@ -1,0 +1,57 @@
+const CACHE_NAME = "inam-cache-v1";
+
+const PRECACHE_URLS = [
+  "index.html",
+  "archive.html",
+  "style.css",
+  "app.js",
+  "archive.js",
+  "manifest.json",
+  "audio/chime.wav",
+  "icons/icon-192.png",
+  "icons/icon-512.png",
+  "icons/icon-512-maskable.png",
+  "icons/apple-touch-icon.png",
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches
+      .open(CACHE_NAME)
+      .then((cache) =>
+        // Force each precache request to bypass the browser's HTTP cache
+        // (cache.addAll can otherwise silently reuse an already-stale
+        // response), so a new CACHE_NAME always precaches fresh files.
+        Promise.all(
+          PRECACHE_URLS.map((url) => fetch(url, { cache: "reload" }).then((response) => cache.put(url, response)))
+        )
+      )
+      .then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((names) => Promise.all(names.filter((name) => name !== CACHE_NAME).map((name) => caches.delete(name))))
+      .then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") return;
+
+  event.respondWith(
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          return response;
+        })
+        .catch(() => cached);
+    })
+  );
+});
