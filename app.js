@@ -305,10 +305,32 @@ goBtn.addEventListener("click", () => {
   session.endTime = Date.now() + minutes * 60000;
   goToStage("timer");
 
+  // Safari requires audio to be started from a real tap before it will allow
+  // a later, un-tapped play() call to succeed. Play-then-immediately-pause
+  // here "unlocks" the element so the alarm can actually fire when the timer
+  // ends, since that call happens on its own with no fresh tap behind it.
+  primeAudio();
+
   if (typeof Notification !== "undefined" && Notification.permission === "default") {
     Notification.requestPermission();
   }
 });
+
+function primeAudio() {
+  try {
+    const playResult = chime.play();
+    if (playResult && typeof playResult.then === "function") {
+      playResult
+        .then(() => {
+          chime.pause();
+          chime.currentTime = 0;
+        })
+        .catch(() => {});
+    }
+  } catch {
+    // Ignored -- playChime()'s own try/catch covers the real alarm call.
+  }
+}
 
 function startTimerLoop() {
   clearInterval(timerIntervalId);
@@ -329,6 +351,7 @@ function updateCountdown() {
 
 function onTimerComplete() {
   playChime();
+  if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
   if (document.hidden) notifyTimeUp();
   document.title = "⏰ Time's up! — I Need A Minute";
   goToStage("finalRating");
