@@ -112,6 +112,71 @@ function buildFirstPersonSummary(session) {
   return `<p>${beforeParts.join(" ")}</p><p>${afterParts.join(" ")}</p>`;
 }
 
+function buildCheckInPdf(entry) {
+  const { session } = entry;
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "pt", format: "letter" });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 48;
+  const maxWidth = pageWidth - margin * 2;
+  let y = margin;
+
+  function ensureSpace(lineHeight) {
+    if (y + lineHeight > pageHeight - margin) {
+      doc.addPage();
+      y = margin;
+    }
+  }
+
+  function addTitle(text, size) {
+    ensureSpace(size + 8);
+    doc.setFont(undefined, "bold");
+    doc.setFontSize(size);
+    doc.text(text, margin, y);
+    y += size + 8;
+    doc.setFont(undefined, "normal");
+  }
+
+  function addHeading(text) {
+    ensureSpace(20);
+    doc.setFont(undefined, "bold");
+    doc.setFontSize(13);
+    doc.text(text, margin, y);
+    y += 18;
+    doc.setFont(undefined, "normal");
+  }
+
+  function addParagraph(text) {
+    doc.setFontSize(10.5);
+    const lines = doc.splitTextToSize(text, maxWidth);
+    for (const line of lines) {
+      ensureSpace(14);
+      doc.text(line, margin, y);
+      y += 14;
+    }
+  }
+
+  addTitle("I Need A Minute — Check-In", 16);
+  addParagraph(formatSavedAt(entry.savedAt));
+  y += 6;
+
+  addHeading("What happened");
+  addParagraph(`Feeling: ${session.feeling || "(not specified)"}`);
+  if (session.cause) addParagraph(`Cause: ${session.cause}`);
+  if (session.reaction) addParagraph(`First instinct: ${session.reaction}`);
+  if (session.timeframe) addParagraph(`Timeframe: ${TIMEFRAME_LABELS[session.timeframe]}`);
+  if (session.plan) addParagraph(`Plan to calm down: ${session.plan}`);
+  y += 6;
+
+  addHeading("After the minute");
+  addParagraph(`Feeling: ${session.revisitFeeling || "(not specified)"}`);
+  if (session.resolution) addParagraph(`Resolution: ${RESOLUTION_LABELS[session.resolution] || session.resolution}`);
+  if (session.notes) addParagraph(`Notes: ${session.notes}`);
+
+  return doc;
+}
+
 const archiveListEl = document.getElementById("archiveList");
 const emptyStateEl = document.getElementById("emptyState");
 const trackerSectionEl = document.getElementById("trackerSection");
@@ -201,6 +266,15 @@ function buildCard(entry) {
     viewBtn.textContent = detail.hidden ? "View" : "Hide";
   });
 
+  const downloadBtn = document.createElement("button");
+  downloadBtn.type = "button";
+  downloadBtn.textContent = "Download PDF";
+  downloadBtn.addEventListener("click", () => {
+    const pdf = buildCheckInPdf(entry);
+    const dateStamp = entry.savedAt ? entry.savedAt.slice(0, 10) : "undated";
+    pdf.save(`i-need-a-minute-${dateStamp}.pdf`);
+  });
+
   const deleteBtn = document.createElement("button");
   deleteBtn.type = "button";
   deleteBtn.className = "danger";
@@ -211,7 +285,7 @@ function buildCard(entry) {
     render();
   });
 
-  actions.append(viewBtn, deleteBtn);
+  actions.append(viewBtn, downloadBtn, deleteBtn);
   summary.append(info, actions);
   card.append(summary, detail);
   return card;

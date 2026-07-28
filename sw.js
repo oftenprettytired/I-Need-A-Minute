@@ -1,4 +1,4 @@
-const CACHE_NAME = "inam-cache-v6";
+const CACHE_NAME = "inam-cache-v7";
 
 const PRECACHE_URLS = [
   "index.html",
@@ -6,6 +6,7 @@ const PRECACHE_URLS = [
   "style.css",
   "app.js",
   "archive.js",
+  "vendor/jspdf.umd.min.js",
   "manifest.json",
   "audio/chime.wav",
   "icons/icon-192.png",

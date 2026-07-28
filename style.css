@@ -476,6 +476,7 @@ button {
 
 .archive-card-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
