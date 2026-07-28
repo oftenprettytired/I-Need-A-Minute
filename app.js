@@ -295,7 +295,9 @@ planForm.addEventListener("submit", (e) => {
 
 quickPicks.querySelectorAll("button").forEach((btn) => {
   btn.addEventListener("click", () => {
-    minutesInput.value = btn.dataset.minutes;
+    const current = Math.max(0, parseInt(minutesInput.value, 10) || 0);
+    const add = parseInt(btn.dataset.minutes, 10) || 0;
+    minutesInput.value = Math.min(180, current + add);
   });
 });
 
