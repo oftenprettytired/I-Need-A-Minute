@@ -14,7 +14,6 @@
   --cat-past: #6b8fa6;
   --cat-present: #3a7d8a;
   --cat-future: #9575b3;
-  --cat-doesnt-exist: #c98a4b;
   --cat-unspecified: #9aa39f;
   --cat-yes: #5a9c6f;
   --cat-no: #b3543f;
@@ -437,10 +436,6 @@ button {
   background: var(--cat-future);
 }
 
-.cat-doesnt-exist {
-  background: var(--cat-doesnt-exist);
-}
-
 .cat-unspecified {
   background: var(--cat-unspecified);
 }
@@ -541,7 +536,6 @@ button {
     --cat-past: #8fb3cc;
     --cat-present: #56a3ad;
     --cat-future: #b79bd6;
-    --cat-doesnt-exist: #e0a868;
     --cat-unspecified: #7c8985;
     --cat-yes: #7cbf8e;
     --cat-no: #e08a72;

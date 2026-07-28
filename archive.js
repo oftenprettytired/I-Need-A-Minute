@@ -2,9 +2,8 @@ const ARCHIVE_KEY = "inam-archive-v1";
 
 const TIMEFRAME_LABELS = {
   past: "the past",
-  present: "right now",
+  present: "the present",
   future: "the future",
-  "doesnt-exist": "something that doesn't really exist",
 };
 
 const RESOLUTION_LABELS = {
@@ -21,9 +20,8 @@ const RESOLUTION_SENTENCES = {
 
 const CATEGORIES = [
   { key: "past", label: "Past" },
-  { key: "present", label: "Right Now" },
+  { key: "present", label: "Present" },
   { key: "future", label: "Future" },
-  { key: "doesnt-exist", label: "Doesn't Really Exist" },
   { key: "unspecified", label: "Not Specified" },
 ];
 
@@ -101,7 +99,7 @@ function buildFirstPersonSummary(session) {
     }.`
   );
   if (session.initialRating) beforeParts.push(`I'd rate it <strong>${session.initialRating}/10</strong>.`);
-  if (session.timeframe) beforeParts.push(`This was happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
+  if (TIMEFRAME_LABELS[session.timeframe]) beforeParts.push(`This was happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
   if (session.plan) beforeParts.push(`My plan to calm down was to <em>${escapeHtml(session.plan)}</em>.`);
 
   const afterParts = [];
@@ -167,7 +165,7 @@ function buildCheckInPdf(entry) {
   addParagraph(`Feeling: ${session.feeling || "(not specified)"}`);
   if (session.bodyLocation) addParagraph(`Felt physically in: ${session.bodyLocation}`);
   if (session.initialRating) addParagraph(`Intensity: ${session.initialRating}/10`);
-  if (session.timeframe) addParagraph(`Timeframe: ${TIMEFRAME_LABELS[session.timeframe]}`);
+  if (TIMEFRAME_LABELS[session.timeframe]) addParagraph(`Timeframe: ${TIMEFRAME_LABELS[session.timeframe]}`);
   if (session.plan) addParagraph(`Plan to regulate: ${session.plan}`);
   y += 6;
 

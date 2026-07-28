@@ -21,9 +21,8 @@ const REVISIT_STAGES = ["finalRating", "cause", "revisitResolution", "revisitNot
 
 const TIMEFRAME_LABELS = {
   past: "the past",
-  present: "right now",
+  present: "the present",
   future: "the future",
-  "doesnt-exist": "something that doesn't really exist",
 };
 
 const RESOLUTION_SENTENCES = {
@@ -131,7 +130,7 @@ function buildFirstPersonSummary(session) {
     }.`
   );
   if (session.initialRating) beforeParts.push(`I'd rate it <strong>${session.initialRating}/10</strong>.`);
-  if (session.timeframe) beforeParts.push(`This was happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
+  if (TIMEFRAME_LABELS[session.timeframe]) beforeParts.push(`This was happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
   if (session.plan) beforeParts.push(`My plan to calm down was to <em>${escapeHtml(session.plan)}</em>.`);
 
   const afterParts = [];
