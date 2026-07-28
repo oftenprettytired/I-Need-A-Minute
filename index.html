@@ -35,22 +35,25 @@
     </form>
   </section>
 
-  <section id="cause" class="stage" hidden>
-    <form id="causeForm" class="single-question">
+  <section id="bodyLocation" class="stage" hidden>
+    <form id="bodyLocationForm" class="single-question">
       <label class="field">
-        What's causing it?
-        <input type="text" id="causeInput" placeholder="What's behind this feeling?" />
+        Where is it felt physically?
+        <input type="text" id="bodyLocationInput" placeholder="e.g. Chest, stomach, shoulders…" />
       </label>
       <button type="button" class="link-btn" data-back>Back</button>
       <button type="submit" class="primary large">Next</button>
     </form>
   </section>
 
-  <section id="reaction" class="stage" hidden>
-    <form id="reactionForm" class="single-question">
+  <section id="initialRating" class="stage" hidden>
+    <form id="initialRatingForm" class="single-question">
       <label class="field">
-        What does this make you want to do? (your first reaction)
-        <input type="text" id="reactionInput" placeholder="e.g. Snap back, walk away, shut down…" />
+        How intense is this feeling? (1–10)
+        <div class="rating-row">
+          <input type="range" id="initialRatingInput" min="1" max="10" step="1" value="5" />
+          <div class="rating-value" id="initialRatingValue">5</div>
+        </div>
       </label>
       <button type="button" class="link-btn" data-back>Back</button>
       <button type="submit" class="primary large">Next</button>
@@ -76,7 +79,7 @@
   <section id="plan" class="stage" hidden>
     <form id="planForm" class="single-question">
       <label class="field">
-        How will you calm yourself and regulate this feeling?
+        What will you do to regulate?
         <textarea id="planInput" rows="3" placeholder="e.g. Breathe slowly, step outside, drink some water…"></textarea>
       </label>
       <button type="button" class="link-btn" data-back>Back</button>
@@ -112,13 +115,27 @@
   </section>
 
   <!-- Revisit, one question per screen -->
-  <section id="revisitFeeling" class="stage" hidden>
+  <section id="cause" class="stage" hidden>
     <h2>Welcome back</h2>
-    <form id="revisitFeelingForm" class="single-question">
+    <form id="causeForm" class="single-question">
       <label class="field">
-        What are you feeling now?
-        <input type="text" id="revisitFeelingInput" placeholder="How do you feel now?" required />
+        What's causing it?
+        <input type="text" id="causeInput" placeholder="What's behind this feeling?" />
       </label>
+      <button type="submit" class="primary large">Next</button>
+    </form>
+  </section>
+
+  <section id="finalRating" class="stage" hidden>
+    <form id="finalRatingForm" class="single-question">
+      <label class="field">
+        How intense is the feeling now? (1–10)
+        <div class="rating-row">
+          <input type="range" id="finalRatingInput" min="1" max="10" step="1" value="5" />
+          <div class="rating-value" id="finalRatingValue">5</div>
+        </div>
+      </label>
+      <button type="button" class="link-btn" data-back>Back</button>
       <button type="submit" class="primary large">Next</button>
     </form>
   </section>

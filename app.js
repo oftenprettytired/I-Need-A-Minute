@@ -3,20 +3,21 @@ const ARCHIVE_KEY = "inam-archive-v1";
 
 const STAGES = [
   "feeling",
-  "cause",
-  "reaction",
+  "bodyLocation",
+  "initialRating",
   "timeframe",
   "plan",
   "timerSetup",
   "timer",
-  "revisitFeeling",
+  "cause",
+  "finalRating",
   "revisitResolution",
   "revisitNotes",
   "resolved",
 ];
 
-const INTAKE_STAGES = ["feeling", "cause", "reaction", "timeframe", "plan"];
-const REVISIT_STAGES = ["revisitFeeling", "revisitResolution", "revisitNotes"];
+const INTAKE_STAGES = ["feeling", "bodyLocation", "initialRating", "timeframe", "plan"];
+const REVISIT_STAGES = ["cause", "finalRating", "revisitResolution", "revisitNotes"];
 
 const TIMEFRAME_LABELS = {
   past: "the past",
@@ -35,13 +36,14 @@ function createEmptySession() {
   return {
     stage: "feeling",
     feeling: "",
-    cause: "",
-    reaction: "",
+    bodyLocation: "",
+    initialRating: null,
     timeframe: "",
     plan: "",
     minutes: null,
     endTime: null,
-    revisitFeeling: "",
+    cause: "",
+    finalRating: null,
     resolution: "",
     notes: "",
   };
@@ -72,11 +74,12 @@ function saveSession(session) {
 function hasSessionContent(session) {
   return Boolean(
     session.feeling ||
-      session.cause ||
-      session.reaction ||
+      session.bodyLocation ||
+      session.initialRating ||
       session.timeframe ||
       session.plan ||
-      session.revisitFeeling ||
+      session.cause ||
+      session.finalRating ||
       session.resolution ||
       session.notes
   );
@@ -124,19 +127,21 @@ function buildFirstPersonSummary(session) {
   const beforeParts = [];
   beforeParts.push(
     `I was feeling <strong>${escapeHtml(session.feeling) || "…"}</strong>${
-      session.cause ? `, caused by <em>${escapeHtml(session.cause)}</em>` : ""
+      session.bodyLocation ? `, felt in my <em>${escapeHtml(session.bodyLocation)}</em>` : ""
     }.`
   );
-  if (session.reaction) beforeParts.push(`My first instinct was to <em>${escapeHtml(session.reaction)}</em>.`);
+  if (session.initialRating) beforeParts.push(`I'd rate it <strong>${session.initialRating}/10</strong>.`);
   if (session.timeframe) beforeParts.push(`This was happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
   if (session.plan) beforeParts.push(`My plan to calm down was to <em>${escapeHtml(session.plan)}</em>.`);
 
   const afterParts = [];
-  afterParts.push(`After taking a minute, I felt <strong>${escapeHtml(session.revisitFeeling) || "…"}</strong>.`);
+  if (session.cause) afterParts.push(`Looking back, the cause was <em>${escapeHtml(session.cause)}</em>.`);
+  if (session.finalRating) afterParts.push(`After taking a minute, I'd rate it <strong>${session.finalRating}/10</strong>.`);
   if (session.resolution) afterParts.push(RESOLUTION_SENTENCES[session.resolution] || "");
   if (session.notes) afterParts.push(`Notes: <em>${escapeHtml(session.notes)}</em>.`);
 
-  return `<p>${beforeParts.join(" ")}</p><p>${afterParts.join(" ")}</p>`;
+  const afterHtml = afterParts.length > 0 ? `<p>${afterParts.join(" ")}</p>` : "";
+  return `<p>${beforeParts.join(" ")}</p>${afterHtml}`;
 }
 
 function formatCountdown(ms) {
@@ -155,10 +160,11 @@ const stepIndicator = document.getElementById("stepIndicator");
 
 const feelingForm = document.getElementById("feelingForm");
 const feelingInput = document.getElementById("feelingInput");
-const causeForm = document.getElementById("causeForm");
-const causeInput = document.getElementById("causeInput");
-const reactionForm = document.getElementById("reactionForm");
-const reactionInput = document.getElementById("reactionInput");
+const bodyLocationForm = document.getElementById("bodyLocationForm");
+const bodyLocationInput = document.getElementById("bodyLocationInput");
+const initialRatingForm = document.getElementById("initialRatingForm");
+const initialRatingInput = document.getElementById("initialRatingInput");
+const initialRatingValue = document.getElementById("initialRatingValue");
 const timeframeForm = document.getElementById("timeframeForm");
 const planForm = document.getElementById("planForm");
 const planInput = document.getElementById("planInput");
@@ -171,8 +177,11 @@ const countdownDisplay = document.getElementById("countdownDisplay");
 const skipTimerBtn = document.getElementById("skipTimerBtn");
 const chime = document.getElementById("chime");
 
-const revisitFeelingForm = document.getElementById("revisitFeelingForm");
-const revisitFeelingInput = document.getElementById("revisitFeelingInput");
+const causeForm = document.getElementById("causeForm");
+const causeInput = document.getElementById("causeInput");
+const finalRatingForm = document.getElementById("finalRatingForm");
+const finalRatingInput = document.getElementById("finalRatingInput");
+const finalRatingValue = document.getElementById("finalRatingValue");
 const resolutionChoices = document.getElementById("resolutionChoices");
 const resolutionNextBtn = document.getElementById("resolutionNextBtn");
 const revisitNotesForm = document.getElementById("revisitNotesForm");
@@ -210,13 +219,14 @@ function renderStage() {
   updateStepIndicator();
 
   if (session.stage === "feeling") feelingInput.value = session.feeling;
-  if (session.stage === "cause") causeInput.value = session.cause;
-  if (session.stage === "reaction") reactionInput.value = session.reaction;
+  if (session.stage === "bodyLocation") bodyLocationInput.value = session.bodyLocation;
+  if (session.stage === "initialRating") setRatingInput(initialRatingInput, initialRatingValue, session.initialRating);
   if (session.stage === "timeframe") fillTimeframe();
   if (session.stage === "plan") planInput.value = session.plan;
   if (session.stage === "timerSetup") minutesInput.value = session.minutes || 5;
   if (session.stage === "timer") startTimerLoop();
-  if (session.stage === "revisitFeeling") revisitFeelingInput.value = session.revisitFeeling;
+  if (session.stage === "cause") causeInput.value = session.cause;
+  if (session.stage === "finalRating") setRatingInput(finalRatingInput, finalRatingValue, session.finalRating);
   if (session.stage === "revisitResolution") fillResolutionButtons();
   if (session.stage === "revisitNotes") revisitNotesInput.value = session.notes;
   if (session.stage === "resolved") resolvedSummary.innerHTML = buildFirstPersonSummary(session);
@@ -227,6 +237,21 @@ function fillTimeframe() {
     radio.checked = radio.value === session.timeframe;
   }
 }
+
+function setRatingInput(inputEl, valueEl, savedValue) {
+  const value = savedValue || 5;
+  inputEl.value = value;
+  valueEl.textContent = value;
+}
+
+function wireRatingInput(inputEl, valueEl) {
+  inputEl.addEventListener("input", () => {
+    valueEl.textContent = inputEl.value;
+  });
+}
+
+wireRatingInput(initialRatingInput, initialRatingValue);
+wireRatingInput(finalRatingInput, finalRatingValue);
 
 // Every "Back" link just steps to the previous entry in STAGES relative to
 // whichever stage is currently showing.
@@ -240,18 +265,18 @@ document.querySelectorAll("[data-back]").forEach((btn) => {
 feelingForm.addEventListener("submit", (e) => {
   e.preventDefault();
   session.feeling = feelingInput.value.trim();
-  goToStage("cause");
+  goToStage("bodyLocation");
 });
 
-causeForm.addEventListener("submit", (e) => {
+bodyLocationForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  session.cause = causeInput.value.trim();
-  goToStage("reaction");
+  session.bodyLocation = bodyLocationInput.value.trim();
+  goToStage("initialRating");
 });
 
-reactionForm.addEventListener("submit", (e) => {
+initialRatingForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  session.reaction = reactionInput.value.trim();
+  session.initialRating = parseInt(initialRatingInput.value, 10);
   goToStage("timeframe");
 });
 
@@ -306,7 +331,7 @@ function onTimerComplete() {
   playChime();
   if (document.hidden) notifyTimeUp();
   document.title = "⏰ Time's up! — I Need A Minute";
-  goToStage("revisitFeeling");
+  goToStage("cause");
 }
 
 function playChime() {
@@ -333,12 +358,18 @@ window.addEventListener("focus", () => {
 
 skipTimerBtn.addEventListener("click", () => {
   clearInterval(timerIntervalId);
-  goToStage("revisitFeeling");
+  goToStage("cause");
 });
 
-revisitFeelingForm.addEventListener("submit", (e) => {
+causeForm.addEventListener("submit", (e) => {
   e.preventDefault();
-  session.revisitFeeling = revisitFeelingInput.value.trim();
+  session.cause = causeInput.value.trim();
+  goToStage("finalRating");
+});
+
+finalRatingForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  session.finalRating = parseInt(finalRatingInput.value, 10);
   goToStage("revisitResolution");
 });
 
@@ -409,7 +440,7 @@ resetBtn.addEventListener("click", () => {
 // has since passed, skip straight to the revisit stage on reload instead of
 // showing a stale/expired countdown.
 if (session.stage === "timer" && session.endTime && Date.now() >= session.endTime) {
-  session.stage = "revisitFeeling";
+  session.stage = "cause";
   saveSession(session);
 }
 

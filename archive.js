@@ -97,19 +97,21 @@ function buildFirstPersonSummary(session) {
   const beforeParts = [];
   beforeParts.push(
     `I was feeling <strong>${escapeHtml(session.feeling) || "…"}</strong>${
-      session.cause ? `, caused by <em>${escapeHtml(session.cause)}</em>` : ""
+      session.bodyLocation ? `, felt in my <em>${escapeHtml(session.bodyLocation)}</em>` : ""
     }.`
   );
-  if (session.reaction) beforeParts.push(`My first instinct was to <em>${escapeHtml(session.reaction)}</em>.`);
+  if (session.initialRating) beforeParts.push(`I'd rate it <strong>${session.initialRating}/10</strong>.`);
   if (session.timeframe) beforeParts.push(`This was happening in ${TIMEFRAME_LABELS[session.timeframe]}.`);
   if (session.plan) beforeParts.push(`My plan to calm down was to <em>${escapeHtml(session.plan)}</em>.`);
 
   const afterParts = [];
-  afterParts.push(`After taking a minute, I felt <strong>${escapeHtml(session.revisitFeeling) || "…"}</strong>.`);
+  if (session.cause) afterParts.push(`Looking back, the cause was <em>${escapeHtml(session.cause)}</em>.`);
+  if (session.finalRating) afterParts.push(`After taking a minute, I'd rate it <strong>${session.finalRating}/10</strong>.`);
   if (session.resolution) afterParts.push(RESOLUTION_SENTENCES[session.resolution] || "");
   if (session.notes) afterParts.push(`Notes: <em>${escapeHtml(session.notes)}</em>.`);
 
-  return `<p>${beforeParts.join(" ")}</p><p>${afterParts.join(" ")}</p>`;
+  const afterHtml = afterParts.length > 0 ? `<p>${afterParts.join(" ")}</p>` : "";
+  return `<p>${beforeParts.join(" ")}</p>${afterHtml}`;
 }
 
 function buildCheckInPdf(entry) {
@@ -163,14 +165,15 @@ function buildCheckInPdf(entry) {
 
   addHeading("What happened");
   addParagraph(`Feeling: ${session.feeling || "(not specified)"}`);
-  if (session.cause) addParagraph(`Cause: ${session.cause}`);
-  if (session.reaction) addParagraph(`First instinct: ${session.reaction}`);
+  if (session.bodyLocation) addParagraph(`Felt physically in: ${session.bodyLocation}`);
+  if (session.initialRating) addParagraph(`Intensity: ${session.initialRating}/10`);
   if (session.timeframe) addParagraph(`Timeframe: ${TIMEFRAME_LABELS[session.timeframe]}`);
-  if (session.plan) addParagraph(`Plan to calm down: ${session.plan}`);
+  if (session.plan) addParagraph(`Plan to regulate: ${session.plan}`);
   y += 6;
 
   addHeading("After the minute");
-  addParagraph(`Feeling: ${session.revisitFeeling || "(not specified)"}`);
+  if (session.cause) addParagraph(`Cause: ${session.cause}`);
+  if (session.finalRating) addParagraph(`Intensity now: ${session.finalRating}/10`);
   if (session.resolution) addParagraph(`Resolution: ${RESOLUTION_LABELS[session.resolution] || session.resolution}`);
   if (session.notes) addParagraph(`Notes: ${session.notes}`);
 

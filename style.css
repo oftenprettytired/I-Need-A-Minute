@@ -91,6 +91,26 @@ body {
   text-align: left;
 }
 
+.rating-row {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.rating-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--teal);
+}
+
+.rating-value {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--teal-dark);
+  font-variant-numeric: tabular-nums;
+}
+
 .stage h2 {
   margin-top: 0;
   color: var(--teal-dark);
