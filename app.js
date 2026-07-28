@@ -45,6 +45,7 @@ function createEmptySession() {
     finalRating: null,
     resolution: "",
     notes: "",
+    savedToDashboard: false,
   };
 }
 
@@ -404,6 +405,8 @@ revisitNotesForm.addEventListener("submit", (e) => {
 saveArchiveBtn.addEventListener("click", () => {
   const archive = loadArchive();
   saveArchive([...archive, createArchiveEntry(session)]);
+  session.savedToDashboard = true;
+  saveSession(session);
   const original = "Save to Dashboard";
   saveArchiveBtn.textContent = "Saved!";
   setTimeout(() => {
@@ -419,7 +422,7 @@ function doReset() {
 }
 
 resetBtn.addEventListener("click", () => {
-  if (!hasSessionContent(session)) {
+  if (session.savedToDashboard || !hasSessionContent(session)) {
     doReset();
     return;
   }
