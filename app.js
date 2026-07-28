@@ -374,7 +374,7 @@ revisitNotesForm.addEventListener("submit", (e) => {
 saveArchiveBtn.addEventListener("click", () => {
   const archive = loadArchive();
   saveArchive([...archive, createArchiveEntry(session)]);
-  const original = "Save to Archive";
+  const original = "Save to Dashboard";
   saveArchiveBtn.textContent = "Saved!";
   setTimeout(() => {
     saveArchiveBtn.textContent = original;
@@ -394,7 +394,7 @@ resetBtn.addEventListener("click", () => {
     return;
   }
   const shouldSave = confirm(
-    "This check-in has content. Save it to the archive first?\n\nClick OK to save it, or Cancel to continue without saving."
+    "This check-in has content. Save it to the dashboard first?\n\nClick OK to save it, or Cancel to continue without saving."
   );
   if (shouldSave) {
     saveArchive([...loadArchive(), createArchiveEntry(session)]);

@@ -1,8 +1,8 @@
-const CACHE_NAME = "inam-cache-v5";
+const CACHE_NAME = "inam-cache-v6";
 
 const PRECACHE_URLS = [
   "index.html",
-  "archive.html",
+  "dashboard.html",
   "style.css",
   "app.js",
   "archive.js",
