@@ -115,18 +115,8 @@
   </section>
 
   <!-- Revisit, one question per screen -->
-  <section id="cause" class="stage" hidden>
-    <h2>Welcome back</h2>
-    <form id="causeForm" class="single-question">
-      <label class="field">
-        What's causing it?
-        <input type="text" id="causeInput" placeholder="What's behind this feeling?" />
-      </label>
-      <button type="submit" class="primary large">Next</button>
-    </form>
-  </section>
-
   <section id="finalRating" class="stage" hidden>
+    <h2>Welcome back</h2>
     <form id="finalRatingForm" class="single-question">
       <label class="field">
         How intense is the feeling now? (1–10)
@@ -134,6 +124,16 @@
           <input type="range" id="finalRatingInput" min="1" max="10" step="1" value="5" />
           <div class="rating-value" id="finalRatingValue">5</div>
         </div>
+      </label>
+      <button type="submit" class="primary large">Next</button>
+    </form>
+  </section>
+
+  <section id="cause" class="stage" hidden>
+    <form id="causeForm" class="single-question">
+      <label class="field">
+        What's causing it?
+        <input type="text" id="causeInput" placeholder="What's behind this feeling?" />
       </label>
       <button type="button" class="link-btn" data-back>Back</button>
       <button type="submit" class="primary large">Next</button>

@@ -1,4 +1,4 @@
-const CACHE_NAME = "inam-cache-v8";
+const CACHE_NAME = "inam-cache-v9";
 
 const PRECACHE_URLS = [
   "index.html",

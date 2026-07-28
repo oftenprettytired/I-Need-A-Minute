@@ -105,8 +105,8 @@ function buildFirstPersonSummary(session) {
   if (session.plan) beforeParts.push(`My plan to calm down was to <em>${escapeHtml(session.plan)}</em>.`);
 
   const afterParts = [];
-  if (session.cause) afterParts.push(`Looking back, the cause was <em>${escapeHtml(session.cause)}</em>.`);
   if (session.finalRating) afterParts.push(`After taking a minute, I'd rate it <strong>${session.finalRating}/10</strong>.`);
+  if (session.cause) afterParts.push(`Looking back, the cause was <em>${escapeHtml(session.cause)}</em>.`);
   if (session.resolution) afterParts.push(RESOLUTION_SENTENCES[session.resolution] || "");
   if (session.notes) afterParts.push(`Notes: <em>${escapeHtml(session.notes)}</em>.`);
 
@@ -172,8 +172,8 @@ function buildCheckInPdf(entry) {
   y += 6;
 
   addHeading("After the minute");
-  if (session.cause) addParagraph(`Cause: ${session.cause}`);
   if (session.finalRating) addParagraph(`Intensity now: ${session.finalRating}/10`);
+  if (session.cause) addParagraph(`Cause: ${session.cause}`);
   if (session.resolution) addParagraph(`Resolution: ${RESOLUTION_LABELS[session.resolution] || session.resolution}`);
   if (session.notes) addParagraph(`Notes: ${session.notes}`);
 

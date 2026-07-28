@@ -9,15 +9,15 @@ const STAGES = [
   "plan",
   "timerSetup",
   "timer",
-  "cause",
   "finalRating",
+  "cause",
   "revisitResolution",
   "revisitNotes",
   "resolved",
 ];
 
 const INTAKE_STAGES = ["feeling", "bodyLocation", "initialRating", "timeframe", "plan"];
-const REVISIT_STAGES = ["cause", "finalRating", "revisitResolution", "revisitNotes"];
+const REVISIT_STAGES = ["finalRating", "cause", "revisitResolution", "revisitNotes"];
 
 const TIMEFRAME_LABELS = {
   past: "the past",
@@ -135,8 +135,8 @@ function buildFirstPersonSummary(session) {
   if (session.plan) beforeParts.push(`My plan to calm down was to <em>${escapeHtml(session.plan)}</em>.`);
 
   const afterParts = [];
-  if (session.cause) afterParts.push(`Looking back, the cause was <em>${escapeHtml(session.cause)}</em>.`);
   if (session.finalRating) afterParts.push(`After taking a minute, I'd rate it <strong>${session.finalRating}/10</strong>.`);
+  if (session.cause) afterParts.push(`Looking back, the cause was <em>${escapeHtml(session.cause)}</em>.`);
   if (session.resolution) afterParts.push(RESOLUTION_SENTENCES[session.resolution] || "");
   if (session.notes) afterParts.push(`Notes: <em>${escapeHtml(session.notes)}</em>.`);
 
@@ -331,7 +331,7 @@ function onTimerComplete() {
   playChime();
   if (document.hidden) notifyTimeUp();
   document.title = "⏰ Time's up! — I Need A Minute";
-  goToStage("cause");
+  goToStage("finalRating");
 }
 
 function playChime() {
@@ -358,18 +358,18 @@ window.addEventListener("focus", () => {
 
 skipTimerBtn.addEventListener("click", () => {
   clearInterval(timerIntervalId);
-  goToStage("cause");
-});
-
-causeForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-  session.cause = causeInput.value.trim();
   goToStage("finalRating");
 });
 
 finalRatingForm.addEventListener("submit", (e) => {
   e.preventDefault();
   session.finalRating = parseInt(finalRatingInput.value, 10);
+  goToStage("cause");
+});
+
+causeForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  session.cause = causeInput.value.trim();
   goToStage("revisitResolution");
 });
 
@@ -440,7 +440,7 @@ resetBtn.addEventListener("click", () => {
 // has since passed, skip straight to the revisit stage on reload instead of
 // showing a stale/expired countdown.
 if (session.stage === "timer" && session.endTime && Date.now() >= session.endTime) {
-  session.stage = "cause";
+  session.stage = "finalRating";
   saveSession(session);
 }
 
